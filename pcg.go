@@ -45,7 +45,7 @@ func (p *T) Uint64() uint64 {
 	xor2 := uint32(((state2 >> 18) ^ state2) >> 27)
 	shift2 := uint(state2>>59) & 31
 
-	return uint64(xor1>>shift1|xor1<<(32-shift1)) |
+	return uint64(xor1>>shift1|xor1<<(32-shift1))<<32 |
 		uint64(xor2>>shift2|xor2<<(32-shift2))
 }
 
