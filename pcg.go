@@ -1,27 +1,16 @@
 package pcg
 
-import (
-	"math/bits"
-)
-
-// T is a pcg generator. The zero value is invalid.
+// T is a pcg generator.
 type T struct {
 	State uint64
 	Inc   uint64
 }
 
+// mul is the multiplier for the LCG step.
 const mul = 6364136223846793005
 
 // New constructs a pcg with the given state and inc.
 func New(state, inc uint64) T {
-	// this code is equiv to initializing a pcg with a 0 state and the updated
-	// inc and running
-	//
-	//    p.Uint32()
-	//    p.State += state
-	//    p.Uint32()
-	//
-	// to get the generator started
 	inc = inc<<1 | 1
 	return T{
 		State: (inc+state)*mul + inc,
@@ -31,32 +20,54 @@ func New(state, inc uint64) T {
 
 // Uint32 returns a random uint32.
 func (p *T) Uint32() uint32 {
-	// update the state (LCG step)
-	oldstate := p.State
-	p.State = oldstate*mul + p.Inc
+	if p.Inc == 0 {
+		*p = T{mul + 1, 1}
+	}
 
-	// apply the output permutation to the old state
-	// NOTE: this should be a right rotate but i can't coerce the compiler into
-	// doing it. since any rotate should be sufficient for the output compression
-	// function, this ought to be fine, and is significantly faster.
+	state := p.State
+	p.State = state*mul + p.Inc
 
-	xorshift := uint32(((oldstate >> 18) ^ oldstate) >> 27)
-	return bits.RotateLeft32(xorshift, int(oldstate>>59))
+	xor := uint32(((state >> 18) ^ state) >> 27)
+	shift := uint(state>>59) & 31
+
+	return xor>>shift | xor<<(32-shift)
+}
+
+// Uint64 advances twice and returns a random uint64.
+func (p *T) Uint64() uint64 {
+	state1 := p.State
+	state2 := state1*mul + p.Inc
+	p.State = state2*mul + p.Inc
+
+	xor1 := uint32(((state1 >> 18) ^ state1) >> 27)
+	shift1 := uint(state1>>59) & 31
+
+	xor2 := uint32(((state2 >> 18) ^ state2) >> 27)
+	shift2 := uint(state2>>59) & 31
+
+	return uint64(xor1>>shift1|xor1<<(32-shift1)) |
+		uint64(xor2>>shift2|xor2<<(32-shift2))
 }
 
 // Intn returns an int uniformly in [0, n)
 func (p *T) Intn(n int) int {
-	return fastMod(p.Uint32(), n)
+	return int((uint64(p.Uint32()) * uint64(n)) >> 32)
 }
 
 // Float64 returns a float uniformly in [0, 1)
 func (p *T) Float64() float64 {
-	u53 := uint64(p.Uint32()<<21) | uint64(p.Uint32()>>11)
-	return float64(u53) / (1 << 53)
-}
+	state1 := p.State
+	state2 := state1*mul + p.Inc
+	p.State = state2*mul + p.Inc
 
-// fastMod computes n % m assuming that n is a random number in the full
-// uint32 range.
-func fastMod(n uint32, m int) int {
-	return int((uint64(n) * uint64(m)) >> 32)
+	xor1 := uint32(((state1 >> 18) ^ state1) >> 27)
+	shift1 := uint(state1>>59) & 31
+
+	xor2 := uint32(((state2 >> 18) ^ state2) >> 27)
+	shift2 := uint(state2>>59) & 31
+
+	v := uint64(xor1>>shift1|xor1<<(32-shift1)) |
+		uint64(xor2>>shift2|xor2<<(32-shift2))
+
+	return float64(v>>(64-53)) / (1 << 53)
 }
