@@ -48,14 +48,14 @@ func BenchmarkPCG(b *testing.B) {
 		b.Run("Large", func(b *testing.B) {
 			rng := New(2345)
 			for i := 0; i < b.N; i++ {
-				blackholeUint32 += rng.Uint32n(2000000)
+				blackholeUint32 += rng.Uint32n(1<<31 + 1)
 			}
 		})
 
 		b.Run("Small", func(b *testing.B) {
 			rng := New(2345)
 			for i := 0; i < b.N; i++ {
-				blackholeUint32 += rng.Uint32n(20)
+				blackholeUint32 += rng.Uint32n(1000)
 			}
 		})
 	})
