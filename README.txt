@@ -4,6 +4,26 @@ package pcg
     import "github.com/zeebo/pcg"
 
 
+FUNCTIONS
+
+func Float32() float32
+    Float32 returns a float32 uniformly in [0, 1). Safe for concurrent
+    callers.
+
+func Float64() float64
+    Float64 returns a float64 uniformly in [0, 1). Safe for concurrent
+    callers.
+
+func Uint32() uint32
+    Uint32 returns a random uint32. Safe for concurrent callers.
+
+func Uint32n(n uint32) uint32
+    Uint32n returns a uint32 uniformly in [0, n). Safe for concurrent
+    callers.
+
+func Uint64() uint64
+    Uint64 returns a random uint64. Safe for concurrent callers.
+
 TYPES
 
 type PT struct {
