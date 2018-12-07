@@ -8,61 +8,76 @@ import (
 
 func TestPCG(t *testing.T) {
 	t.Run("Matches", func(t *testing.T) {
-		rng := New(2345, 2378)
+		rng := New(2345)
 		out := make([]uint32, 10)
 		for i := range out {
 			out[i] = rng.Uint32()
 		}
 
 		assert.DeepEqual(t, out, []uint32{
-			0xccca066b,
-			0x40cee775,
-			0x0df46902,
-			0x981fbe29,
-			0xfc8bfb85,
-			0xcfd9eef2,
-			0xa046c325,
-			0x31abe14c,
-			0xe29defb4,
-			0x160568cc,
+			0x4fb93cfb,
+			0x7f1f4c1e,
+			0x9d253788,
+			0x424b17a2,
+			0x41f308c7,
+			0x847fd9fc,
+			0x4aa51433,
+			0x9f72ee73,
+			0x57cb76b4,
+			0x8ba782bc,
 		})
-	})
-
-	t.Run("Zero", func(t *testing.T) {
-		var rng1 T
-		var rng2 = New(0, 0)
-
-		for i := 0; i < 10; i++ {
-			assert.Equal(t, rng1.Uint32(), rng2.Uint32())
-		}
 	})
 }
 
 var (
 	blackholeUint32  uint32
 	blackholeUint64  uint64
+	blackholeFloat32 float32
 	blackholeFloat64 float64
 )
 
 func BenchmarkPCG(b *testing.B) {
 	b.Run("Uint32", func(b *testing.B) {
-		rng := New(2345, 2378)
+		rng := New(2345)
 		for i := 0; i < b.N; i++ {
 			blackholeUint32 += rng.Uint32()
 		}
 	})
 
+	b.Run("Uint32n", func(b *testing.B) {
+		b.Run("Large", func(b *testing.B) {
+			rng := New(2345)
+			for i := 0; i < b.N; i++ {
+				blackholeUint32 += rng.Uint32n(2000000)
+			}
+		})
+
+		b.Run("Small", func(b *testing.B) {
+			rng := New(2345)
+			for i := 0; i < b.N; i++ {
+				blackholeUint32 += rng.Uint32n(20)
+			}
+		})
+	})
+
 	b.Run("Uint64", func(b *testing.B) {
-		rng := New(2345, 2378)
+		rng := New(2345)
 		for i := 0; i < b.N; i++ {
 			blackholeUint64 += rng.Uint64()
 		}
 	})
 
 	b.Run("Float64", func(b *testing.B) {
-		rng := New(2345, 2378)
+		rng := New(2345)
 		for i := 0; i < b.N; i++ {
 			blackholeFloat64 += rng.Float64()
+		}
+	})
+
+	b.Run("Float32", func(b *testing.B) {
+		rng := New(2345)
+		for i := 0; i < b.N; i++ {
+			blackholeFloat32 += rng.Float32()
 		}
 	})
 }
